@@ -9,6 +9,8 @@
 
     `git clone https://github.com/nguyennk/order_lunch_react_front_end.git`.
 
+2. **Obtain rpmrc file and EH_TOKEN from other dev**
+
 3. **Run the setup script**
 
     `npm run setup`
