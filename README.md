@@ -1,8 +1,3 @@
-<p align="center">
-  <img src="https://employmenthero.com/wp-content/uploads/2016/03/EH-Logo-Reversed-1.png"/>
-</p>
-
----
 # Get Started
 
 1. **Clone the project**
