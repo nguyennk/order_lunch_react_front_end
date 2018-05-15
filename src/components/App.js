@@ -1,47 +1,88 @@
 /* eslint-disable import/no-named-as-default */
-import React from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux'
 import { compose, lifecycle } from 'recompose';
-import { Switch, Route } from 'react-router-dom';
-import { withRouter } from 'react-router-dom'
+import { connect } from 'react-redux';
+import { Notifs } from 'redux-notifications';
+import { Switch, Route, withRouter } from 'react-router-dom';
+import PropTypes from 'prop-types';
+import React from 'react';
+
 import LoginPage from './modules/login';
-import OrderPage from './modules/order';
-import RestaurantPage from './modules/restaurant';
 import NavBar from './modules/shared/components/NavBar';
 import NotFoundPage from './modules/404';
+import OrderPage from './modules/order';
+import RestaurantPage from './modules/restaurant';
 
 import {
   isAuthenticatedSelector,
   loginUserSelector,
-  requestValidate
+  requestValidate,
+  requestLogout,
+  loginTokenSelector,
 } from '../components/modules/login/state';
+import SideBar from './modules/shared/components/SideBar';
+import ConfirmModal from './modules/shared/components/ConfirmModal';
+import {
+  isOpenConfirmLogoutModalSelector,
+  setIsOpenConfirmLogoutModal,
+} from './modules/shared/state';
+
+const modalButtonGroup = (logout, openConfirmLogoutModal) => [
+  {
+    label: 'Log out',
+    onClick: () => {
+      logout();
+      openConfirmLogoutModal(false);
+    },
+  },
+  {
+    label: 'Back',
+    onClick: () => openConfirmLogoutModal(false),
+  },
+];
+
+const modalMessage = <p>You sure you want to log out?</p>;
 
 // This is a class-based component because the current
 // version of hot reloading won't hot reload a stateless
 // component at the top-level.
 class App extends React.Component {
   render() {
-    const { isAuthenticated, userData } = this.props;
+    const {
+      isAuthenticated,
+      isOpenConfirmLogoutModal,
+      logout,
+      openConfirmLogoutModal,
+      userData,
+      loginToken,
+    } = this.props;
 
     return (
-      <div className='velonic-theme'>
-        {isAuthenticated && userData &&
-          <div>
-            <NavBar />
-            <div id="main-container" className="container-fluid">
-              <Switch>
-                <Route exact path="/" component={OrderPage} />
-                <Route path="/order" component={OrderPage} />
-                <Route path="/restaurant" component={RestaurantPage} />
-                <Route component={NotFoundPage} />
-              </Switch>
+      <div className="velonic-theme">
+        <Notifs className="notification-container" />
+        {isAuthenticated &&
+          userData &&
+          loginToken && (
+            <div>
+              <div id="main-container" className="container-fluid">
+                <ConfirmModal
+                  isOpen={isOpenConfirmLogoutModal}
+                  title="Confirm Logout"
+                  buttonGroup={modalButtonGroup(logout, openConfirmLogoutModal)}
+                  message={modalMessage}
+                  onRequestClose={() => openConfirmLogoutModal(false)}
+                />
+                <SideBar />
+                <NavBar />
+                <Switch>
+                  <Route exact path="/" component={OrderPage} />
+                  <Route path="/order" component={OrderPage} />
+                  <Route path="/restaurant" component={RestaurantPage} />
+                  <Route component={NotFoundPage} />
+                </Switch>
+              </div>
             </div>
-          </div>
-        }
-        {!isAuthenticated &&
-          <LoginPage />
-        }
+          )}
+        {!isAuthenticated && <LoginPage />}
       </div>
     );
   }
@@ -49,17 +90,26 @@ class App extends React.Component {
 
 App.propTypes = {
   isAuthenticated: PropTypes.bool.isRequired,
+  isOpenConfirmLogoutModal: PropTypes.bool,
+  logout: PropTypes.func,
+  loginToken: PropTypes.string.isRequired,
+  openConfirmLogoutModal: PropTypes.func,
   userData: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = state => ({
   isAuthenticated: isAuthenticatedSelector(state),
   userData: loginUserSelector(state),
-})
+  loginToken: loginTokenSelector(state),
+  isOpenConfirmLogoutModal: isOpenConfirmLogoutModalSelector(state),
+});
 
 const mapDispatchToProps = dispatch => ({
   validateToken: userData => dispatch(requestValidate(userData)),
-})
+  openConfirmLogoutModal: status =>
+    dispatch(setIsOpenConfirmLogoutModal(status)),
+  logout: () => dispatch(requestLogout()),
+});
 
 const lifeCycleHOC = lifecycle({
   componentWillMount() {
