@@ -8,7 +8,8 @@
 
 3. **Run the setup script**
 
-    `npm run setup`
+    `yarn install`
+    `yarn run`
 
 ## Initial Machine Setup
 
